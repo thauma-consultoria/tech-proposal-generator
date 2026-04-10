@@ -9,7 +9,6 @@ function formatCurrency(value: number): string {
 }
 
 function formatCurrencyWords(value: number): string {
-  // Basic number-to-words for BRL — handles most proposal values
   const units = [
     "", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove",
     "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis",
@@ -51,31 +50,41 @@ function formatCurrencyWords(value: number): string {
   const thousands = Math.floor((intVal % 1_000_000) / 1_000);
   const remainder = intVal % 1_000;
 
-  if (millions > 0) {
-    parts.push(threeDigits(millions) + (millions === 1 ? " milhão" : " milhões"));
-  }
-  if (thousands > 0) {
-    parts.push(threeDigits(thousands) + (thousands === 1 ? " mil" : " mil"));
-  }
-  if (remainder > 0) {
-    parts.push(threeDigits(remainder));
-  }
+  if (millions > 0) parts.push(threeDigits(millions) + (millions === 1 ? " milhão" : " milhões"));
+  if (thousands > 0) parts.push(threeDigits(thousands) + " mil");
+  if (remainder > 0) parts.push(threeDigits(remainder));
 
   let result = parts.join(" e ") + " reais";
-
-  if (cents > 0) {
-    result += ` e ${threeDigits(cents)} centavos`;
-  }
-
+  if (cents > 0) result += ` e ${threeDigits(cents)} centavos`;
   return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+// Converts plain text (with \n line breaks) to HTML paragraphs/lines
+function textToHtml(text: string): string {
+  return text
+    .split("\n\n")
+    .map((block) =>
+      `<p>${block.replace(/\n/g, "<br/>")}</p>`
+    )
+    .join("");
+}
+
+function renderSection(letra: string, titulo: string, conteudo: string): string {
+  return `
+  <div class="section">
+    <div class="section-header">
+      <span class="section-letter">${letra}.</span>
+      <span class="section-title">${titulo}</span>
+    </div>
+    <div class="section-body">
+      ${textToHtml(conteudo)}
+    </div>
+  </div>`;
 }
 
 export function generateProposalHTML(data: ProposalData, logoBase64: string): string {
   const total = data.precoItens.reduce((sum, item) => sum + item.valor, 0);
   const totalWords = formatCurrencyWords(total);
-  const softwares = data.softwareCalculo.length > 0
-    ? data.softwareCalculo.join(", ")
-    : "TQS, SAP2000, planilhas próprias";
 
   const headerRef = data.revisao
     ? `${data.numero} — ${data.revisao}`
@@ -85,7 +94,6 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Proposta ${data.numero}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -109,17 +117,6 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     background: var(--branco);
     line-height: 1.6;
   }
-
-  /* ── PAGE LAYOUT ── */
-  .page {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 18mm 20mm 22mm 20mm;
-    position: relative;
-    page-break-after: always;
-  }
-
-  .page:last-child { page-break-after: auto; }
 
   /* ── WATERMARK ── */
   .watermark {
@@ -159,9 +156,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     width: auto;
   }
 
-  .header-ref {
-    text-align: right;
-  }
+  .header-ref { text-align: right; }
 
   .header-ref .ref-number {
     font-size: 11pt;
@@ -176,7 +171,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     margin-top: 2px;
   }
 
-  /* ── COVER INFO (first page only) ── */
+  /* ── COVER INFO ── */
   .cover-info {
     margin: 28px 0 32px 0;
     position: relative;
@@ -227,7 +222,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
 
   /* ── SECTION ── */
   .section {
-    margin-bottom: 24px;
+    margin-bottom: 22px;
     position: relative;
     z-index: 1;
   }
@@ -236,9 +231,9 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     display: flex;
     align-items: baseline;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     border-bottom: 1px solid var(--borda);
-    padding-bottom: 6px;
+    padding-bottom: 5px;
   }
 
   .section-letter {
@@ -267,11 +262,10 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     font-size: 10pt;
   }
 
+  .section-body p:last-child { margin-bottom: 0; }
+
   /* ── SCOPE LIST ── */
-  .scope-list {
-    list-style: none;
-    padding: 0;
-  }
+  .scope-list { list-style: none; padding: 0; }
 
   .scope-list li {
     padding: 7px 0 7px 16px;
@@ -325,9 +319,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
 
   .pricing-table thead th:last-child { text-align: right; }
 
-  .pricing-table tbody tr:nth-child(even) {
-    background: var(--cinza-claro);
-  }
+  .pricing-table tbody tr:nth-child(even) { background: var(--cinza-claro); }
 
   .pricing-table tbody td {
     padding: 8px 12px;
@@ -340,9 +332,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     font-weight: 500;
   }
 
-  .pricing-table tfoot tr {
-    background: var(--verde-light);
-  }
+  .pricing-table tfoot tr { background: var(--verde-light); }
 
   .pricing-table tfoot td {
     padding: 10px 12px;
@@ -404,45 +394,18 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     font-weight: 500;
   }
 
-  /* ── FOOTER ── */
-  .page-footer {
-    position: fixed;
-    bottom: 10mm;
-    left: 20mm;
-    right: 20mm;
-    border-top: 1px solid var(--borda);
-    padding-top: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 7.5pt;
-    color: #AAAAAA;
-    z-index: 1;
-  }
-
   /* ── PRINT ── */
   @media print {
-    @page {
-      size: A4;
-      margin: 0;
-    }
+    @page { size: A4; margin: 0; }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
 </head>
 <body>
 
-<!-- Watermark -->
 <img class="watermark" src="${logoBase64}" alt="" aria-hidden="true" />
 
-<!-- Footer (fixed, repeats on all pages) -->
-<div class="page-footer">
-  <span>Alameda Oscar Niemeyer, 1033, portaria 3, sala 427 — Vila da Serra | Nova Lima | MG | 34006-065</span>
-  <span><strong>www.estruturalprojetos.com</strong></span>
-</div>
-
-<!-- ═══════════════════════════════════════ PAGE 1 ═══════════════════════════════════════ -->
-<div class="page">
+<div style="padding: 16mm 20mm 10mm 20mm;">
 
   <!-- Header -->
   <div class="page-header">
@@ -479,7 +442,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     </div>
   </div>
 
-  <!-- Section A: Escopo -->
+  <!-- Seção A: Escopo -->
   <div class="section">
     <div class="section-header">
       <span class="section-letter">A.</span>
@@ -488,78 +451,19 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     <div class="section-body">
       <ul class="scope-list">
         ${data.escopoItens.map((item, idx) => `
-          <li>
-            <span class="scope-item-label">Item ${idx + 1}</span>${item.descricao}
-          </li>
+          <li><span class="scope-item-label">Item ${idx + 1}</span>${item.descricao}</li>
         `).join("")}
       </ul>
     </div>
   </div>
 
-  <!-- Section B: Organização dos Trabalhos -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-letter">B.</span>
-      <span class="section-title">Organização dos Trabalhos</span>
-    </div>
-    <div class="section-body">
-      <p>Os serviços serão executados pela <strong>Tech-Estrutural Projetos de Engenharia</strong>, com sede em Belo Horizonte/MG, por equipe especializada sob a direção de Engenheiro Coordenador Sênior.</p>
-      <p>Todos os projetos serão entregues em formato DWG e PDF, salvo disposição específica em contrário.</p>
-    </div>
-  </div>
+  ${renderSection("B", "Organização dos Trabalhos", data.secaoB)}
+  ${renderSection("C", "Normas e Critérios de Cálculo", data.secaoC)}
+  ${renderSection("D", "Metodologia de Cálculo", data.secaoD)}
+  ${renderSection("E", "Condições Especiais", data.secaoE)}
+  ${renderSection("F", "Revisões e Serviços Adicionais", data.secaoF)}
 
-  <!-- Section C: Normas -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-letter">C.</span>
-      <span class="section-title">Normas e Critérios de Cálculo</span>
-    </div>
-    <div class="section-body">
-      <p>Todos os projetos serão elaborados em conformidade com as normas da <strong>ABNT</strong> vigentes, em sua revisão mais recente. Quando necessário, serão adotados procedimentos reconhecidos internacionalmente.</p>
-    </div>
-  </div>
-
-  <!-- Section D: Metodologia -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-letter">D.</span>
-      <span class="section-title">Metodologia de Cálculo</span>
-    </div>
-    <div class="section-body">
-      <p>Os cálculos serão realizados com o auxílio dos programas <strong>${softwares}</strong>, todos em conformidade com as normas vigentes.</p>
-    </div>
-  </div>
-
-  <!-- Section E: Condições Especiais -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-letter">E.</span>
-      <span class="section-title">Condições Especiais</span>
-    </div>
-    <div class="section-body">
-      <p>Para o desenvolvimento dos serviços, o contratante deverá fornecer:</p>
-      <ul class="scope-list">
-        <li>Sondagens e laudos geotécnicos</li>
-        <li>Levantamento topográfico</li>
-        <li>Planta de implantação e projetos arquitetônicos</li>
-        <li>Pontos de apoio e mapeamento de cargas</li>
-        <li>Projeto geométrico e batimetria, quando aplicável</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Section F: Revisões -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-letter">F.</span>
-      <span class="section-title">Revisões e Serviços Adicionais</span>
-    </div>
-    <div class="section-body">
-      <p>Alterações de caráter conceitual, após início dos serviços, serão objeto de nova proposta. Visitas técnicas à obra e deslocamentos serão cobrados por horas técnicas, conforme tabela da Seção G, acrescidos de reembolso de viagem e hospedagem quando necessário.</p>
-    </div>
-  </div>
-
-  <!-- Section G: Preço -->
+  <!-- Seção G: Preço -->
   <div class="section">
     <div class="section-header">
       <span class="section-letter">G.</span>
@@ -571,7 +475,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
           <tr>
             <th style="width:40px">Item</th>
             <th>Descrição</th>
-            <th style="width:120px">Valor</th>
+            <th style="width:130px">Valor</th>
           </tr>
         </thead>
         <tbody>
@@ -612,31 +516,33 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     </div>
   </div>
 
-  <!-- Section H: Pagamento -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-letter">H.</span>
-      <span class="section-title">Condições de Pagamento</span>
-    </div>
-    <div class="section-body">
-      <p>${data.pagamento}</p>
-    </div>
-  </div>
+  ${renderSection("H", "Condições de Pagamento", data.pagamento)}
+  ${renderSection("J", "Prazos de Entrega", data.prazo)}
 
-  <!-- Section J: Prazos -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-letter">J.</span>
-      <span class="section-title">Prazos de Entrega</span>
-    </div>
-    <div class="section-body">
-      <p>${data.prazo}</p>
-    </div>
-  </div>
+  ${data.secoesExtras.map(sec =>
+    renderSection(sec.letra, sec.titulo, sec.conteudo)
+  ).join("")}
 
 </div>
-<!-- ═══════════════════════════════════════ END PAGE ═══════════════════════════════════════ -->
-
 </body>
 </html>`;
+}
+
+export function generateFooterHTML(): string {
+  return `
+    <div style="
+      width: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 7.5pt;
+      color: #AAAAAA;
+      padding: 0 20mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #E0E0E0;
+      padding-top: 5px;
+    ">
+      <span>Alameda Oscar Niemeyer, 1033, portaria 3, sala 427 — Vila da Serra | Nova Lima | MG | 34006-065</span>
+      <span style="font-weight: 600; color: #888888;">www.estruturalprojetos.com</span>
+    </div>`;
 }
