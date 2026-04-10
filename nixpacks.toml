@@ -1,4 +1,7 @@
 # Dependências de sistema necessárias para o Chromium (Puppeteer) no Railway (Linux)
+[variables]
+NIXPACKS_NODE_VERSION = "20"
+
 [phases.setup]
 aptPkgs = [
   "libnss3",
