@@ -428,7 +428,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
         <span>${data.cliente}</span>
       </div>
       <div class="meta-item">
-        <label>Responsável Técnico</label>
+        <label>Responsável pela Proposta</label>
         <span>${data.contato}</span>
       </div>
       <div class="meta-item">
@@ -460,7 +460,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
   ${renderSection("B", "Organização dos Trabalhos", data.secaoB)}
   ${renderSection("C", "Normas e Critérios de Cálculo", data.secaoC)}
   ${renderSection("D", "Metodologia de Cálculo", data.secaoD)}
-  ${renderSection("E", "Condições Especiais", data.secaoE)}
+  ${renderSection("E", "Condições e Informações sob responsabilidade do Contratante", data.secaoE)}
   ${renderSection("F", "Revisões e Serviços Adicionais", data.secaoF)}
 
   <!-- Seção G: Preço -->

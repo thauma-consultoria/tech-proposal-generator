@@ -259,10 +259,10 @@ export default function Home() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Responsável Técnico (Tech Estrutural) *
+                  Responsável pela Proposta *
                 </label>
                 <input type="text" value={contato} onChange={(e) => setContato(e.target.value)}
-                  placeholder="Profissional da Tech Estrutural que elaborou a proposta"
+                  placeholder="Nome do responsável pela proposta"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent" />
               </div>
               <div>
@@ -288,7 +288,7 @@ export default function Home() {
               <SectionField letra="B" titulo="Organização dos Trabalhos" value={secaoB} onChange={setSecaoB} />
               <SectionField letra="C" titulo="Normas e Critérios de Cálculo" value={secaoC} onChange={setSecaoC} />
               <SectionField letra="D" titulo="Metodologia de Cálculo" value={secaoD} onChange={setSecaoD} />
-              <SectionField letra="E" titulo="Condições Especiais" value={secaoE} onChange={setSecaoE} rows={6} />
+              <SectionField letra="E" titulo="Condições e Informações sob responsabilidade do Contratante" value={secaoE} onChange={setSecaoE} rows={6} />
               <SectionField letra="F" titulo="Revisões e Serviços Adicionais" value={secaoF} onChange={setSecaoF} />
             </div>
           </FormStep>
@@ -328,7 +328,7 @@ export default function Home() {
               <div className="bg-gray-50 rounded-xl p-4 space-y-2.5">
                 <Row label="Proposta" value={`${numero}${revisao ? ` — ${revisao}` : ""}`} />
                 <Row label="Cliente" value={cliente} />
-                <Row label="Resp. Técnico" value={contato} />
+                <Row label="Responsável" value={contato} />
                 <Row label="Data" value={`${cidade}, ${dataStr}`} />
                 <Row label="Assunto" value={assunto} />
               </div>
