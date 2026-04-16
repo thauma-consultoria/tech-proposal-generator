@@ -234,6 +234,25 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     margin-bottom: 8px;
     border-bottom: 1px solid var(--borda);
     padding-bottom: 5px;
+    break-after: avoid-page;
+    page-break-after: avoid;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .section-body > *:first-child,
+  .section-body > p:first-child,
+  .scope-list > li:first-child {
+    break-before: avoid-page;
+    page-break-before: avoid;
+  }
+
+  .section-body p,
+  .scope-list li,
+  .pricing-table tr,
+  .hourly-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .section-letter {
@@ -396,7 +415,6 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
 
   /* ── PRINT ── */
   @media print {
-    @page { size: A4; margin: 0; }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
