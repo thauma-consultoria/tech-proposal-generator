@@ -34,10 +34,10 @@ export async function POST(req: Request) {
       headerTemplate: "<span></span>",
       footerTemplate: footerHtml,
       margin: {
-        top: "0mm",
-        bottom: "18mm",
-        left: "0mm",
-        right: "0mm",
+        top: "20mm",
+        bottom: "22mm",
+        left: "20mm",
+        right: "20mm",
       },
     });
 

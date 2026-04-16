@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import FormStep from "@/components/FormStep";
 import ScopeEditor from "@/components/ScopeEditor";
 import PricingEditor from "@/components/PricingEditor";
 import CustomSectionsEditor from "@/components/CustomSectionsEditor";
+import UserMenu from "@/components/UserMenu";
+import {
+  getProposal,
+  insertProposal,
+  updateProposal,
+} from "@/lib/supabase/proposals";
+import {
+  syncPayloadImages,
+  payloadWithSignedImages,
+} from "@/lib/supabase/imageSync";
 import {
   ProposalData,
   ScopeItem,
@@ -94,6 +105,12 @@ export default function Home() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [loadingProposal, setLoadingProposal] = useState(false);
+  const [lastSavedPayload, setLastSavedPayload] =
+    useState<ProposalData | null>(null);
 
   // Etapa 1 — Identificação
   const [numero, setNumero] = useState("");
@@ -123,6 +140,41 @@ export default function Home() {
   const [prazo, setPrazo] = useState(DEFAULT_PRAZO);
   const [secoesExtras, setSecoesExtras] = useState<CustomSection[]>([]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    if (!id) return;
+    setLoadingProposal(true);
+    getProposal(id)
+      .then((row) => {
+        const p = row.payload;
+        setNumero(p.numero);
+        setRevisao(p.revisao ?? "");
+        setCidade(p.cidade);
+        setDataStr(p.data);
+        setCliente(p.cliente);
+        setContato(p.contato);
+        setAssunto(p.assunto);
+        setEscopoItens(p.escopoItens);
+        setSecaoB(p.secaoB);
+        setSecaoC(p.secaoC);
+        setSecaoD(p.secaoD);
+        setSecaoE(p.secaoE);
+        setSecaoF(p.secaoF);
+        setPrecoItens(p.precoItens);
+        setHorasTecnicas(p.horasTecnicas);
+        setPagamento(p.pagamento);
+        setPrazo(p.prazo);
+        setSecoesExtras(p.secoesExtras);
+        setEditingId(row.id);
+        setLastSavedPayload(p);
+      })
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Erro ao carregar proposta"),
+      )
+      .finally(() => setLoadingProposal(false));
+  }, []);
+
   function buildPayload(): ProposalData {
     return {
       numero, revisao: revisao || undefined,
@@ -136,14 +188,52 @@ export default function Home() {
     };
   }
 
+  async function handleSave(mode: "new" | "update" | "newRevision") {
+    setSaving(true);
+    setError("");
+    setSaveMsg("");
+    try {
+      const raw = buildPayload();
+      // Upload das base64, cleanup de orphans (só em update — newRevision preserva imagens originais)
+      const previous = mode === "update" ? lastSavedPayload ?? undefined : undefined;
+      const synced = await syncPayloadImages(raw, previous);
+
+      // Propaga paths de volta pro state, pra não re-uploadar no próximo save.
+      setEscopoItens(synced.escopoItens);
+
+      let id: string;
+      if (mode === "update" && editingId) {
+        const row = await updateProposal(editingId, synced);
+        id = row.id;
+        setSaveMsg("Proposta atualizada.");
+      } else if (mode === "newRevision" && editingId) {
+        const row = await insertProposal(synced, editingId);
+        id = row.id;
+        setSaveMsg("Nova revisão salva.");
+      } else {
+        const row = await insertProposal(synced);
+        id = row.id;
+        setSaveMsg("Proposta salva.");
+      }
+      setEditingId(id);
+      setLastSavedPayload(synced);
+      window.history.replaceState(null, "", `/?id=${id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleGenerate() {
     setLoading(true);
     setError("");
     try {
+      const payload = await payloadWithSignedImages(buildPayload());
       const res = await fetch("/api/gerar-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload()),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -185,8 +275,15 @@ export default function Home() {
         </div>
         <div className="h-6 w-px bg-gray-200" />
         <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-          Gerador de Propostas
+          {editingId ? "Editando Proposta" : "Nova Proposta"}
         </span>
+        <Link
+          href="/propostas"
+          className="text-xs font-semibold text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-md transition"
+        >
+          Histórico
+        </Link>
+        <UserMenu />
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-10">
@@ -393,10 +490,46 @@ export default function Home() {
                 </div>
               )}
 
+              {saveMsg && (
+                <div className="bg-[#EBF4EB] border border-[#7BAF7A]/40 text-[#1A7A1A] rounded-lg px-4 py-3 text-sm">
+                  {saveMsg}
+                </div>
+              )}
+
+              {editingId ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleSave("update")}
+                    disabled={saving || loading}
+                    className="bg-white hover:bg-gray-50 disabled:bg-gray-100 border border-gray-300 text-gray-800 font-semibold py-3 rounded-xl transition text-sm"
+                  >
+                    {saving ? "Salvando..." : "Atualizar"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSave("newRevision")}
+                    disabled={saving || loading}
+                    className="bg-[#7BAF7A] hover:bg-[#6a9e69] disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition text-sm"
+                  >
+                    {saving ? "Salvando..." : "Salvar como nova revisão"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSave("new")}
+                  disabled={saving || loading}
+                  className="w-full bg-[#7BAF7A] hover:bg-[#6a9e69] disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition text-sm"
+                >
+                  {saving ? "Salvando..." : "Salvar proposta"}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleGenerate}
-                disabled={loading}
+                disabled={loading || saving}
                 className="w-full bg-[#1A1A1A] hover:bg-[#333] disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition text-sm tracking-wide flex items-center justify-center gap-2"
               >
                 {loading ? (

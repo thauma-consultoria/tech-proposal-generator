@@ -1,6 +1,15 @@
+export interface ScopeImage {
+  id: string;
+  path?: string;      // storage path após upload (Supabase)
+  dataUrl?: string;   // base64 antes do upload, OU signed URL pro PDF
+  fonte: string;
+  descricao: string;
+}
+
 export interface ScopeItem {
   id: string;
   descricao: string;
+  imagens?: ScopeImage[];
 }
 
 export interface PriceItem {

@@ -1,6 +1,7 @@
 "use client";
 
-import { ScopeItem } from "@/lib/types";
+import { ScopeItem, ScopeImage } from "@/lib/types";
+import ScopeImageEditor from "./ScopeImageEditor";
 
 interface Props {
   items: ScopeItem[];
@@ -24,6 +25,10 @@ export default function ScopeEditor({ items, onChange }: Props) {
     onChange(items.map((i) => (i.id === id ? { ...i, descricao } : i)));
   }
 
+  function updateImages(id: string, imagens: ScopeImage[]) {
+    onChange(items.map((i) => (i.id === id ? { ...i, imagens } : i)));
+  }
+
   function moveUp(index: number) {
     if (index === 0) return;
     const next = [...items];
@@ -41,47 +46,56 @@ export default function ScopeEditor({ items, onChange }: Props) {
   return (
     <div className="space-y-3">
       {items.map((item, idx) => (
-        <div key={item.id} className="flex gap-2 items-start">
-          <div className="flex flex-col gap-1 pt-2">
+        <div
+          key={item.id}
+          className="border border-gray-100 rounded-xl p-3 bg-white"
+        >
+          <div className="flex gap-2 items-start">
+            <div className="flex flex-col gap-1 pt-2">
+              <button
+                type="button"
+                onClick={() => moveUp(idx)}
+                disabled={idx === 0}
+                className="p-1 rounded text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition"
+                title="Mover para cima"
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                onClick={() => moveDown(idx)}
+                disabled={idx === items.length - 1}
+                className="p-1 rounded text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition"
+                title="Mover para baixo"
+              >
+                ▼
+              </button>
+            </div>
+            <div className="flex items-center gap-2 flex-1">
+              <span className="text-xs font-bold text-[#7BAF7A] min-w-[52px]">
+                Item {idx + 1}
+              </span>
+              <textarea
+                value={item.descricao}
+                onChange={(e) => update(item.id, e.target.value)}
+                rows={2}
+                placeholder="Descrição do item de escopo..."
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent resize-none"
+              />
+            </div>
             <button
               type="button"
-              onClick={() => moveUp(idx)}
-              disabled={idx === 0}
-              className="p-1 rounded text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition"
-              title="Mover para cima"
+              onClick={() => remove(item.id)}
+              className="mt-2 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+              title="Remover item"
             >
-              ▲
-            </button>
-            <button
-              type="button"
-              onClick={() => moveDown(idx)}
-              disabled={idx === items.length - 1}
-              className="p-1 rounded text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed transition"
-              title="Mover para baixo"
-            >
-              ▼
+              ✕
             </button>
           </div>
-          <div className="flex items-center gap-2 flex-1">
-            <span className="text-xs font-bold text-[#7BAF7A] min-w-[52px]">
-              Item {idx + 1}
-            </span>
-            <textarea
-              value={item.descricao}
-              onChange={(e) => update(item.id, e.target.value)}
-              rows={2}
-              placeholder="Descrição do item de escopo..."
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent resize-none"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => remove(item.id)}
-            className="mt-2 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
-            title="Remover item"
-          >
-            ✕
-          </button>
+          <ScopeImageEditor
+            images={item.imagens ?? []}
+            onChange={(imgs) => updateImages(item.id, imgs)}
+          />
         </div>
       ))}
       <button

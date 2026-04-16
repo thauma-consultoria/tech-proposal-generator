@@ -59,6 +59,15 @@ function formatCurrencyWords(value: number): string {
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Converts plain text (with \n line breaks) to HTML paragraphs/lines
 function textToHtml(text: string): string {
   return text
@@ -315,6 +324,41 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     margin-right: 6px;
   }
 
+  /* ── SCOPE IMAGES ── */
+  .scope-images {
+    margin: 8px 0 4px 0;
+  }
+
+  .scope-figure {
+    margin: 10px 0 14px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    text-align: center;
+  }
+
+  .scope-figure img {
+    max-width: 100%;
+    max-height: 110mm;
+    display: block;
+    margin: 0 auto;
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+  }
+
+  .scope-figure .img-descricao {
+    font-size: 9pt;
+    font-style: italic;
+    color: var(--cinza-escuro);
+    margin-top: 5px;
+    line-height: 1.35;
+  }
+
+  .scope-figure .img-fonte {
+    font-size: 8pt;
+    color: var(--cinza-medio);
+    margin-top: 2px;
+  }
+
   /* ── PRICING TABLE ── */
   .pricing-table {
     width: 100%;
@@ -423,7 +467,7 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
 
 <img class="watermark" src="${logoBase64}" alt="" aria-hidden="true" />
 
-<div style="padding: 16mm 20mm 10mm 20mm;">
+<div>
 
   <!-- Header -->
   <div class="page-header">
@@ -468,9 +512,23 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     </div>
     <div class="section-body">
       <ul class="scope-list">
-        ${data.escopoItens.map((item, idx) => `
-          <li><span class="scope-item-label">Item ${idx + 1}</span>${item.descricao}</li>
-        `).join("")}
+        ${data.escopoItens.map((item, idx) => {
+          const imgsHtml = (item.imagens ?? [])
+            .filter((img) => img.dataUrl)
+            .map((img) => `
+              <figure class="scope-figure">
+                <img src="${img.dataUrl}" alt="" />
+                ${img.descricao ? `<figcaption class="img-descricao">${escapeHtml(img.descricao)}</figcaption>` : ""}
+                ${img.fonte ? `<figcaption class="img-fonte">Fonte: ${escapeHtml(img.fonte)}</figcaption>` : ""}
+              </figure>
+            `).join("");
+          return `
+            <li>
+              <span class="scope-item-label">Item ${idx + 1}</span>${escapeHtml(item.descricao)}
+              ${imgsHtml ? `<div class="scope-images">${imgsHtml}</div>` : ""}
+            </li>
+          `;
+        }).join("")}
       </ul>
     </div>
   </div>
