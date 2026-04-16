@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { generateProposalHTML, generateFooterHTML } from "@/lib/template";
@@ -7,6 +8,22 @@ import { ProposalData } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+async function launchBrowser() {
+  const localPath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (localPath) {
+    return puppeteer.launch({
+      executablePath: localPath,
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
+  return puppeteer.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  });
+}
 
 export async function POST(req: Request) {
   try {
@@ -19,10 +36,7 @@ export async function POST(req: Request) {
     const html = generateProposalHTML(data, logoBase64);
     const footerHtml = generateFooterHTML();
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const browser = await launchBrowser();
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
