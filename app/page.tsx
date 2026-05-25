@@ -120,6 +120,8 @@ export default function Home() {
   const [cliente, setCliente] = useState("");
   const [contato, setContato] = useState("");
   const [assunto, setAssunto] = useState("");
+  const [assinaturaNome, setAssinaturaNome] = useState("");
+  const [assinaturaCrea, setAssinaturaCrea] = useState("");
 
   // Etapa 2 — Escopo
   const [escopoItens, setEscopoItens] = useState<ScopeItem[]>([{ id: generateId(), descricao: "" }]);
@@ -155,6 +157,8 @@ export default function Home() {
         setCliente(p.cliente);
         setContato(p.contato);
         setAssunto(p.assunto);
+        setAssinaturaNome(p.assinaturaNome ?? "");
+        setAssinaturaCrea(p.assinaturaCrea ?? "");
         setEscopoItens(p.escopoItens);
         setSecaoB(p.secaoB);
         setSecaoC(p.secaoC);
@@ -180,6 +184,8 @@ export default function Home() {
       numero, revisao: revisao || undefined,
       cidade, data: dataStr,
       cliente, contato, assunto,
+      assinaturaNome: assinaturaNome || undefined,
+      assinaturaCrea: assinaturaCrea || undefined,
       escopoItens,
       secaoB, secaoC, secaoD, secaoE, secaoF,
       precoItens, horasTecnicas,
@@ -368,6 +374,31 @@ export default function Home() {
                   placeholder="Ex: Projeto executivo de fundação para obra em Contagem/MG"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent" />
               </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  Assinatura do PDF
+                </span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <p className="text-xs text-gray-400 -mt-2">
+                Aparece como linha de assinatura ao final da proposta. Opcional — deixe em branco para gerar só o traço.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Nome do Signatário</label>
+                  <input type="text" value={assinaturaNome} onChange={(e) => setAssinaturaNome(e.target.value)}
+                    placeholder="Nome de quem assina"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">CREA</label>
+                  <input type="text" value={assinaturaCrea} onChange={(e) => setAssinaturaCrea(e.target.value)}
+                    placeholder="Ex: MG-123456/D"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent" />
+                </div>
+              </div>
             </div>
           </FormStep>
 
@@ -428,6 +459,12 @@ export default function Home() {
                 <Row label="Responsável" value={contato} />
                 <Row label="Data" value={`${cidade}, ${dataStr}`} />
                 <Row label="Assunto" value={assunto} />
+                {(assinaturaNome || assinaturaCrea) && (
+                  <Row
+                    label="Assinatura"
+                    value={[assinaturaNome, assinaturaCrea ? `CREA ${assinaturaCrea}` : ""].filter(Boolean).join(" — ")}
+                  />
+                )}
               </div>
 
               <div>

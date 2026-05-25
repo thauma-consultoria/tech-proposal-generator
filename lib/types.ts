@@ -54,13 +54,16 @@ export interface ProposalData {
   prazo: string;
   // Seções extras personalizadas
   secoesExtras: CustomSection[];
+  // Assinatura (signatário Tech-Estrutural)
+  assinaturaNome?: string;
+  assinaturaCrea?: string;
 }
 
 export const DEFAULT_HOURLY_RATES: HourlyRate[] = [
-  { cargo: "Engenheiro Consultor", valorHora: 400 },
-  { cargo: "Engenheiro Sênior", valorHora: 250 },
-  { cargo: "Engenheiro", valorHora: 190 },
-  { cargo: "Projetista", valorHora: 130 },
+  { cargo: "Engenheiro Consultor", valorHora: 500 },
+  { cargo: "Engenheiro Sênior", valorHora: 345 },
+  { cargo: "Engenheiro", valorHora: 255 },
+  { cargo: "Projetista", valorHora: 180 },
 ];
 
 export const DEFAULT_SECAO_B =

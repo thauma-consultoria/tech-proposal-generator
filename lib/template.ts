@@ -457,6 +457,36 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
     font-weight: 500;
   }
 
+  /* ── SIGNATURE ── */
+  .signature-block {
+    margin-top: 56px;
+    position: relative;
+    z-index: 1;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    text-align: center;
+  }
+
+  .signature-line {
+    width: 80mm;
+    max-width: 100%;
+    margin: 0 auto;
+    border-top: 1px solid var(--cinza-escuro);
+    padding-top: 6px;
+  }
+
+  .signature-name {
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--cinza-escuro);
+  }
+
+  .signature-crea {
+    font-size: 9pt;
+    color: var(--cinza-medio);
+    margin-top: 2px;
+  }
+
   /* ── PRINT ── */
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -598,6 +628,14 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
   ${data.secoesExtras.map(sec =>
     renderSection(sec.letra, sec.titulo, sec.conteudo)
   ).join("")}
+
+  <!-- Assinatura -->
+  <div class="signature-block">
+    <div class="signature-line">
+      <div class="signature-name">${data.assinaturaNome ? escapeHtml(data.assinaturaNome) : "&nbsp;"}</div>
+      ${data.assinaturaCrea ? `<div class="signature-crea">CREA ${escapeHtml(data.assinaturaCrea)}</div>` : ""}
+    </div>
+  </div>
 
 </div>
 </body>
