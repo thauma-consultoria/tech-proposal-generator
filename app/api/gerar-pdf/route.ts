@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { generateProposalHTML, generateFooterHTML } from "@/lib/template";
 import { ProposalData } from "@/lib/types";
+import { buildPdfFilename } from "@/lib/filename";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -98,13 +99,14 @@ export async function POST(req: Request) {
 
     await browser.close();
 
-    const safeNumber = data.numero.replace(/[^a-zA-Z0-9]/g, "-");
+    const filename = buildPdfFilename(data);
+    const asciiFallback = filename.replace(/[^\x20-\x7E]/g, "_");
 
     return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${safeNumber}.pdf"`,
+        "Content-Disposition": `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
       },
     });
   } catch (error) {

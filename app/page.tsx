@@ -16,6 +16,7 @@ import {
   syncPayloadImages,
   payloadWithSignedImages,
 } from "@/lib/supabase/imageSync";
+import { buildPdfFilename } from "@/lib/filename";
 import {
   ProposalData,
   ScopeItem,
@@ -235,7 +236,23 @@ export default function Home() {
     setLoading(true);
     setError("");
     try {
-      const payload = await payloadWithSignedImages(buildPayload());
+      const { payload, itensComImagemFaltando } =
+        await payloadWithSignedImages(buildPayload());
+
+      if (itensComImagemFaltando.length > 0) {
+        const listaItens = itensComImagemFaltando
+          .map((i) => {
+            const desc = escopoItens[i]?.descricao?.trim() ?? "";
+            const trecho = desc ? ` ("${desc.slice(0, 40)}${desc.length > 40 ? "..." : ""}")` : "";
+            return `Item ${i + 1}${trecho}`;
+          })
+          .join(", ");
+        const ok = window.confirm(
+          `Você marcou imagem em ${listaItens}, mas o arquivo não foi inserido ou não foi encontrado.\n\nGerar o PDF mesmo assim, sem essa(s) imagem(ns)?`,
+        );
+        if (!ok) return;
+      }
+
       const res = await fetch("/api/gerar-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,7 +266,7 @@ export default function Home() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${numero.replace(/[^a-zA-Z0-9]/g, "-")}.pdf`;
+      a.download = buildPdfFilename({ numero, revisao, cliente, assunto });
       a.click();
       URL.revokeObjectURL(url);
     } catch (e: unknown) {

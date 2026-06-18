@@ -46,23 +46,41 @@ export async function syncPayloadImages(
 }
 
 // Converte paths em signed URLs antes de mandar pro server renderizar o PDF.
+// Resiliente: se uma imagem não resolve (path inexistente / "Object not found"),
+// ela fica com dataUrl undefined (o template a ignora) e o índice do item é
+// reportado em `itensComImagemFaltando` para que a UI possa avisar o usuário.
 export async function payloadWithSignedImages(
   payload: ProposalData,
-): Promise<ProposalData> {
+): Promise<{ payload: ProposalData; itensComImagemFaltando: number[] }> {
+  const itensComImagemFaltando: number[] = [];
+
   const newEscopo = await Promise.all(
-    payload.escopoItens.map(async (item) => {
+    payload.escopoItens.map(async (item, idx) => {
       if (!item.imagens || item.imagens.length === 0) return item;
+      let faltando = false;
       const imagens: ScopeImage[] = await Promise.all(
         item.imagens.map(async (img) => {
           if (img.path) {
-            const url = await getSignedUrl(img.path);
-            return { ...img, dataUrl: url };
+            try {
+              const url = await getSignedUrl(img.path);
+              return { ...img, dataUrl: url };
+            } catch {
+              faltando = true;
+              return { ...img, dataUrl: undefined };
+            }
           }
+          // Sem path: só é válida se tiver um dataUrl base64 ainda não salvo.
+          if (!img.dataUrl) faltando = true;
           return img;
         }),
       );
+      if (faltando) itensComImagemFaltando.push(idx);
       return { ...item, imagens };
     }),
   );
-  return { ...payload, escopoItens: newEscopo };
+
+  return {
+    payload: { ...payload, escopoItens: newEscopo },
+    itensComImagemFaltando,
+  };
 }
