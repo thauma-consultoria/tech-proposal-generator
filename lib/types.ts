@@ -48,6 +48,8 @@ export interface ProposalData {
   secaoF: string;
   // Seção G
   precoItens: PriceItem[];
+  // Serviços complementares — itens apresentados à parte, NÃO somados ao total geral
+  precoItensAdicionais?: PriceItem[];
   horasTecnicas: HourlyRate[];
   // Seções H e J
   pagamento: string;

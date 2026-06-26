@@ -94,6 +94,9 @@ function renderSection(letra: string, titulo: string, conteudo: string): string 
 export function generateProposalHTML(data: ProposalData, logoBase64: string): string {
   const total = data.precoItens.reduce((sum, item) => sum + item.valor, 0);
   const totalWords = formatCurrencyWords(total);
+  const itensAdicionais = (data.precoItensAdicionais ?? []).filter((item) =>
+    item.descricao.trim()
+  );
 
   const headerRef = data.revisao
     ? `${data.numero} — ${data.revisao}`
@@ -601,6 +604,29 @@ export function generateProposalHTML(data: ProposalData, logoBase64: string): st
         </tfoot>
       </table>
       <p class="total-words">${totalWords}</p>
+
+      ${itensAdicionais.length > 0 ? `
+      <div class="hourly-title">Serviços Complementares</div>
+      <p class="total-words" style="margin-top:0;margin-bottom:8px;">Valores não inclusos no total geral.</p>
+      <table class="pricing-table">
+        <thead>
+          <tr>
+            <th style="width:40px">Item</th>
+            <th>Descrição</th>
+            <th style="width:130px">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itensAdicionais.map((item, idx) => `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${item.descricao}</td>
+              <td>${formatCurrency(item.valor)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      ` : ""}
 
       <div class="hourly-title">Tabela de Horas Técnicas</div>
       <table class="hourly-table">

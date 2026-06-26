@@ -5,6 +5,8 @@ import { PriceItem, HourlyRate } from "@/lib/types";
 interface Props {
   items: PriceItem[];
   onItemsChange: (items: PriceItem[]) => void;
+  extraItems: PriceItem[];
+  onExtraItemsChange: (items: PriceItem[]) => void;
   hourlyRates: HourlyRate[];
   onRatesChange: (rates: HourlyRate[]) => void;
 }
@@ -23,7 +25,14 @@ function parseValue(str: string): number {
   return parseFloat(cleaned) || 0;
 }
 
-export default function PricingEditor({ items, onItemsChange, hourlyRates, onRatesChange }: Props) {
+export default function PricingEditor({
+  items,
+  onItemsChange,
+  extraItems,
+  onExtraItemsChange,
+  hourlyRates,
+  onRatesChange,
+}: Props) {
   const total = items.reduce((sum, i) => sum + i.valor, 0);
 
   function addItem() {
@@ -37,6 +46,24 @@ export default function PricingEditor({ items, onItemsChange, hourlyRates, onRat
   function updateItem(id: string, field: "descricao" | "valor", value: string) {
     onItemsChange(
       items.map((i) =>
+        i.id === id
+          ? { ...i, [field]: field === "valor" ? parseValue(value) : value }
+          : i
+      )
+    );
+  }
+
+  function addExtraItem() {
+    onExtraItemsChange([...extraItems, { id: generateId(), descricao: "", valor: 0 }]);
+  }
+
+  function removeExtraItem(id: string) {
+    onExtraItemsChange(extraItems.filter((i) => i.id !== id));
+  }
+
+  function updateExtraItem(id: string, field: "descricao" | "valor", value: string) {
+    onExtraItemsChange(
+      extraItems.map((i) =>
         i.id === id
           ? { ...i, [field]: field === "valor" ? parseValue(value) : value }
           : i
@@ -117,6 +144,59 @@ export default function PricingEditor({ items, onItemsChange, hourlyRates, onRat
             </div>
           </div>
         )}
+      </div>
+
+      {/* Complementary services — not summed into the grand total */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
+          Serviços Complementares
+        </h3>
+        <p className="text-xs text-gray-400 mb-3">
+          Itens apresentados à parte — os valores <strong>não</strong> entram no total geral.
+        </p>
+        <div className="space-y-2">
+          {extraItems.map((item, idx) => (
+            <div key={item.id} className="flex gap-2 items-center">
+              <span className="text-xs font-bold text-[#7BAF7A] min-w-[46px]">
+                Item {idx + 1}
+              </span>
+              <input
+                type="text"
+                value={item.descricao}
+                onChange={(e) => updateExtraItem(item.id, "descricao", e.target.value)}
+                placeholder="Descrição do serviço complementar..."
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent"
+              />
+              <div className="relative w-36">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                  R$
+                </span>
+                <input
+                  type="text"
+                  defaultValue={item.valor ? formatDisplay(item.valor) : ""}
+                  onBlur={(e) => updateExtraItem(item.id, "valor", e.target.value)}
+                  placeholder="0,00"
+                  className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#7BAF7A] focus:border-transparent"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => removeExtraItem(item.id)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={addExtraItem}
+          className="mt-3 w-full border-2 border-dashed border-[#7BAF7A] text-[#7BAF7A] rounded-lg py-2.5 text-sm font-semibold hover:bg-[#EBF4EB] transition"
+        >
+          + Adicionar serviço complementar
+        </button>
       </div>
 
       {/* Hourly rates */}

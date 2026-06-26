@@ -136,6 +136,7 @@ export default function Home() {
 
   // Etapa 4 — Preço
   const [precoItens, setPrecoItens] = useState<PriceItem[]>([{ id: generateId(), descricao: "", valor: 0 }]);
+  const [precoItensAdicionais, setPrecoItensAdicionais] = useState<PriceItem[]>([]);
   const [horasTecnicas, setHorasTecnicas] = useState<HourlyRate[]>(DEFAULT_HOURLY_RATES);
 
   // Etapa 5 — Condições + Extras
@@ -167,6 +168,7 @@ export default function Home() {
         setSecaoE(p.secaoE);
         setSecaoF(p.secaoF);
         setPrecoItens(p.precoItens);
+        setPrecoItensAdicionais(p.precoItensAdicionais ?? []);
         setHorasTecnicas(p.horasTecnicas);
         setPagamento(p.pagamento);
         setPrazo(p.prazo);
@@ -189,7 +191,9 @@ export default function Home() {
       assinaturaCrea: assinaturaCrea || undefined,
       escopoItens,
       secaoB, secaoC, secaoD, secaoE, secaoF,
-      precoItens, horasTecnicas,
+      precoItens,
+      precoItensAdicionais: precoItensAdicionais.filter((i) => i.descricao.trim()),
+      horasTecnicas,
       pagamento, prazo,
       secoesExtras,
     };
@@ -443,6 +447,8 @@ export default function Home() {
             <PricingEditor
               items={precoItens}
               onItemsChange={setPrecoItens}
+              extraItems={precoItensAdicionais}
+              onExtraItemsChange={setPrecoItensAdicionais}
               hourlyRates={horasTecnicas}
               onRatesChange={setHorasTecnicas}
             />
@@ -521,6 +527,29 @@ export default function Home() {
                   </span>
                 </div>
               </div>
+
+              {precoItensAdicionais.filter((i) => i.descricao.trim()).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Serviços Complementares (não somados ao total)
+                  </p>
+                  <ul className="space-y-1">
+                    {precoItensAdicionais
+                      .filter((i) => i.descricao.trim())
+                      .map((item, idx) => (
+                        <li key={item.id} className="flex justify-between text-sm text-gray-700">
+                          <span>
+                            <span className="text-[#7BAF7A] font-semibold mr-2">Item {idx + 1}</span>
+                            {item.descricao}
+                          </span>
+                          <span className="font-medium">
+                            {item.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
 
               {secoesExtras.length > 0 && (
                 <div>
